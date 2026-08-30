@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1f3a">
+<title>SafeReport | Security Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--panel:#ffffff;--panel2:#f9fbfd;--text:#142033;--muted:#718096;--border:#e6ebf1;
+  --navy:#0b1f3a;--navy2:#153c68;--gold:#d4af37;--gold2:#f0d87a;--green:#16803c;--red:#c62828;--orange:#b86b00;
+  --green-bg:#eaf8ef;--red-bg:#fff0ef;--orange-bg:#fff7e8;--blue-bg:#edf5ff;--purple-bg:#f5effc;
+  --shadow:0 14px 38px rgba(11,31,58,.08);--shadow-lg:0 24px 70px rgba(11,31,58,.13);--sidebar:264px;--header:74px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}body.no-scroll{overflow:hidden}
+/* Sidebar */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar);background:linear-gradient(180deg,#07192e 0%,#0b1f3a 55%,#12375f 100%);color:#fff;z-index:1000;display:flex;flex-direction:column;box-shadow:12px 0 38px rgba(0,0,0,.12);transform:translateX(0);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.sidebar-brand{height:84px;padding:17px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(212,175,55,.24),rgba(255,255,255,.08));border:1px solid rgba(212,175,55,.33);font-size:23px;box-shadow:inset 0 0 22px rgba(255,255,255,.05)}
+.brand-name{font-size:17px;font-weight:800}.brand-subtitle{margin-top:4px;font-size:7px;letter-spacing:1.35px;color:rgba(255,255,255,.50)}
+.mobile-close{display:none;margin-left:auto;width:31px;height:31px;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;font-size:18px}
+.sidebar-nav{flex:1;padding:16px 11px;overflow:auto}.nav-title{padding:10px 11px 7px;color:rgba(255,255,255,.34);font-size:7px;font-weight:900;letter-spacing:1.4px}
+.nav-item{width:100%;display:flex;align-items:center;gap:11px;min-height:45px;padding:0 12px;background:transparent;color:rgba(255,255,255,.68);border-radius:12px;margin-bottom:4px;text-align:left;font-size:10px;font-weight:700;transition:.22s ease}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateX(2px)}.nav-item.active{background:linear-gradient(90deg,rgba(212,175,55,.18),rgba(212,175,55,.05));color:#fff;box-shadow:inset 3px 0 0 var(--gold)}
+.nav-icon{width:22px;text-align:center;font-size:15px}.nav-badge{margin-left:auto;min-width:20px;height:20px;border-radius:20px;display:grid;place-items:center;background:rgba(255,255,255,.10);font-size:8px}.nav-badge.alert{background:var(--red);box-shadow:0 0 0 4px rgba(198,40,40,.12)}
+.sidebar-bottom{padding:13px;border-top:1px solid rgba(255,255,255,.08)}.admin-card{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.06);padding:10px;border-radius:13px}.admin-avatar{width:35px;height:35px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:11px}.admin-info{flex:1}.admin-info strong{display:block;font-size:9px}.admin-info span{display:block;margin-top:3px;font-size:7px;color:#68db90}.status-dot{width:8px;height:8px;border-radius:50%;background:#35c66b;box-shadow:0 0 0 4px rgba(53,198,107,.12)}.sidebar-footer{margin-top:9px;text-align:center;color:rgba(255,255,255,.28);font-size:7px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);backdrop-filter:blur(3px);z-index:950}
+/* App / Header */
+.app{margin-left:var(--sidebar);min-height:100vh}.topbar{position:sticky;top:0;z-index:900;height:var(--header);background:rgba(255,255,255,.90);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 23px;box-shadow:0 3px 20px rgba(11,31,58,.04)}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:10px}.menu-btn{display:none;width:38px;height:38px;border:1px solid var(--border);background:var(--panel);border-radius:11px;color:var(--text);font-size:18px}.page-title{font-size:14px;font-weight:900}.page-subtitle{font-size:8px;color:var(--muted);margin-top:3px}
+.live-strip{display:flex;align-items:center;gap:7px;font-size:8px;font-weight:900;letter-spacing:.28px;white-space:nowrap}.live-pill{color:var(--red)}.conn-pill{color:var(--green)}.conn-pill.connecting{color:var(--orange)}.conn-pill.offline{color:var(--red)}.live-dot,.conn-dot{width:8px;height:8px;border-radius:50%;animation:pulse 1.15s infinite}.live-dot{background:var(--red)}.conn-dot{background:#35c66b}.conn-dot.connecting{background:#e8a21a}.conn-dot.offline{background:#c62828}@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.38;transform:scale(.82)}}
+.theme-toggle{display:flex;align-items:center;gap:4px;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:13px;box-shadow:0 4px 14px rgba(11,31,58,.05)}.theme-btn{padding:7px 9px;border-radius:9px;background:transparent;color:var(--muted);font-size:8px;font-weight:900}.theme-btn.active{background:var(--navy);color:#fff}
+.icon-btn{position:relative;width:36px;height:36px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);font-size:14px}.notify-dot{position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px rgba(198,40,40,.10)}
+/* Content */
+.content{padding:23px;max-width:1480px;margin:auto}.page{display:none;animation:fadeUp .22s ease}.page.active{display:block}@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:18px}.eyebrow{font-size:7px;color:var(--gold);font-weight:900;letter-spacing:1.5px;margin-bottom:6px}.page-head h1{font-size:28px;letter-spacing:-1px}.page-head p{font-size:9px;color:var(--muted);margin-top:5px}
+.live-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border-radius:50px;background:var(--green-bg);color:var(--green);font-size:8px;font-weight:900}.live-badge span{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px}.stat{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:15px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px}.stat-icon{width:41px;height:41px;flex:none;border-radius:12px;display:grid;place-items:center;font-size:17px}.blue{background:var(--blue-bg)}.red{background:var(--red-bg)}.orange{background:var(--orange-bg)}.green{background:var(--green-bg)}.stat-label{font-size:7px;font-weight:900;color:var(--muted)}.stat-value{font-size:24px;font-weight:900;margin-top:4px}.stat-note{font-size:7px;color:#97a2b0;margin-top:2px}
+.dashboard-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.panel,.toolbar,.report-card,.notice-panel,.history-panel,.settings-card,.evidence-card,.modal-card,.empty{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}.panel{overflow:hidden}.panel-head{padding:14px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.panel-head h2{font-size:11px}.panel-head p{font-size:7px;color:var(--muted);margin-top:3px}.panel-link{background:transparent;color:var(--navy);font-size:8px;font-weight:900}.recent,.activity{max-height:405px;overflow:auto}.recent-item{padding:12px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;transition:.18s ease}.recent-item:hover{background:var(--panel2)}.recent-icon{width:35px;height:35px;border-radius:10px;background:var(--panel2);display:grid;place-items:center}.recent-info{flex:1;min-width:0}.recent-id{font-size:8px;font-weight:900}.recent-loc{font-size:7px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.recent-time{font-size:6.5px;color:#97a2b0}.activity-item{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;gap:10px}.activity-line{width:2px;background:var(--border);border-radius:2px}.activity-title{font-size:8px;font-weight:900}.activity-time{font-size:7px;color:var(--muted);margin-top:3px}
+/* Reports */
+.toolbar{padding:11px;display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}.search{position:relative;flex:1;min-width:220px}.search span{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted)}.search input,.filter{height:38px;width:100%;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);outline:0;font-size:9px}.search input{padding:0 12px 0 33px}.filters{display:flex;gap:7px}.filter{width:auto;padding:0 10px}
+.report-card{padding:14px;margin-bottom:10px;position:relative;overflow:hidden;transition:.18s ease}.report-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}.report-card.live-new{border-left:4px solid var(--red)}.report-card.live-new:after{content:"LIVE";position:absolute;right:13px;top:9px;color:var(--red);font-size:7px;font-weight:900;letter-spacing:1px;animation:pulse 1.05s infinite}.report-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.report-id{font-size:9px;font-weight:900}.report-time{font-size:7px;color:var(--muted);margin-top:3px}.badge{display:inline-flex;align-items:center;padding:6px 8px;border-radius:50px;font-size:7px;font-weight:900}.badge.new{background:var(--red-bg);color:var(--red)}.badge.in_progress{background:var(--orange-bg);color:var(--orange)}.badge.resolved{background:var(--green-bg);color:var(--green)}
+.report-grid{display:grid;grid-template-columns:160px 1fr auto;gap:13px;margin-top:13px}.thumb{height:108px;background:#0d1620;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center}.thumb img,.thumb video{width:100%;height:100%;object-fit:cover}.thumb video{background:#0d1620}.audio-thumb{color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:7px;font-weight:900}.audio-thumb span{font-size:26px}.desc{font-size:9px;line-height:1.55;margin-bottom:9px}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.meta-label{font-size:6px;color:var(--muted);font-weight:900;text-transform:uppercase;margin-bottom:3px}.meta-value{font-size:8px;line-height:1.4;word-break:break-word}.actions{display:flex;flex-direction:column;gap:6px;min-width:93px}.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 10px;font-size:7px;font-weight:900;transition:.18s ease}.btn:hover{transform:translateY(-1px)}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}.btn.gold{background:var(--gold);color:var(--navy);border-color:var(--gold)}.btn.danger{color:var(--red);border-color:#efcac7}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+/* Evidence */
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}.tab{padding:8px 11px;border-radius:50px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:7.5px;font-weight:900}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}.evidence-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.evidence-card{overflow:hidden}.evidence-preview{height:160px;background:#0d1620;display:flex;align-items:center;justify-content:center}.evidence-preview img,.evidence-preview video{width:100%;height:100%;object-fit:cover}.evidence-preview audio{width:90%}.evidence-audio-box{color:#fff;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:7px;font-weight:900}.evidence-audio-box span{font-size:31px}.evidence-info{padding:10px}.evidence-type{color:var(--gold);font-size:7px;font-weight:900;text-transform:uppercase}.evidence-name{font-size:8px;font-weight:800;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.evidence-report{font-size:7px;color:var(--muted);margin-top:4px}.evidence-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}.evidence-action{padding:7px 3px;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:8px;font-size:6.5px;font-weight:900}.evidence-action.delete{color:var(--red);border-color:#efcac7}
+/* Notice / history / settings */
+.notice-panel,.history-panel{overflow:hidden}.notice-item,.history-item{padding:14px 15px;border-bottom:1px solid var(--border);display:flex;gap:10px}.notice-item:last-child,.history-item:last-child{border-bottom:0}.notice-item.unread{background:#fffdf3}.notice-icon,.history-icon{width:38px;height:38px;flex:none;border-radius:10px;background:var(--red-bg);display:grid;place-items:center}.notice-main,.history-main{flex:1}.notice-title,.history-title{font-size:8.5px;font-weight:900}.notice-message,.history-desc{font-size:7.5px;color:var(--muted);line-height:1.5;margin-top:4px}.notice-time,.history-time{font-size:6.5px;color:#97a2b0;margin-top:5px}.notice-action{align-self:flex-start}.history-item{cursor:pointer;transition:.18s ease}.history-item:hover{background:var(--panel2)}.settings-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.settings-card{padding:17px}.settings-icon{width:44px;height:44px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;font-size:19px;margin-bottom:12px}.settings-card h2{font-size:10px}.settings-card p{font-size:7.5px;color:var(--muted);line-height:1.55;margin-top:6px}.settings-status{margin-top:12px;display:flex;align-items:center;gap:6px;font-size:7px;font-weight:900;color:var(--green)}.settings-status span:first-child{width:7px;height:7px;border-radius:50%;background:#35c66b}
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(3,12,23,.72);backdrop-filter:blur(10px);z-index:3000;display:none;align-items:center;justify-content:center;padding:15px}.modal.active{display:flex;animation:fadeIn .16s ease}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.modal-card{width:min(100%,900px);max-height:92vh;overflow:auto;border-radius:20px;box-shadow:0 32px 90px rgba(0,0,0,.32);animation:modalUp .20s ease}@keyframes modalUp{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}.small-modal{width:min(100%,560px)}.modal-head{position:sticky;top:0;z-index:2;background:var(--panel);padding:14px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.modal-eyebrow{font-size:7px;color:var(--gold);font-weight:900;letter-spacing:1.25px}.modal-head h2{font-size:14px;margin-top:3px}.modal-close{width:33px;height:33px;border-radius:50%;background:var(--panel2);color:var(--text);font-size:17px}.modal-body{padding:16px}.modal-media{background:#0d1620;border-radius:14px;overflow:hidden;min-height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}.modal-media img,.modal-media video{max-width:100%;max-height:430px;display:block;object-fit:contain}.modal-media audio{width:90%}.modal-audio{padding:32px 18px;display:flex;flex-direction:column;align-items:center;gap:12px;color:#fff;width:100%}.modal-audio span{font-size:41px}.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:13px}.detail{padding:10px;border-radius:10px;background:var(--panel2)}.detail-label{font-size:6px;color:var(--muted);font-weight:900;text-transform:uppercase}.detail-value{font-size:8px;line-height:1.5;margin-top:4px;word-break:break-word}.modal-section{border-top:1px solid var(--border);margin-top:14px;padding-top:14px}.modal-section h3{font-size:10px}.response-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.response-grid input,.response-grid select,.response-grid textarea{width:100%;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:9px;padding:9px;font-size:8px;outline:none}.response-grid textarea{min-height:83px;grid-column:1/-1;resize:vertical}.modal-foot{display:flex;gap:8px;justify-content:space-between;margin-top:13px;padding-top:12px;border-top:1px solid var(--border)}.share-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.share-option{padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--panel);color:var(--text);text-align:left;transition:.18s ease}.share-option:hover{transform:translateY(-1px);box-shadow:var(--shadow)}.share-option strong{display:block;font-size:8.5px}.share-option span{display:block;font-size:7px;color:var(--muted);margin-top:4px;line-height:1.4}.share-option.whatsapp{background:#16803c;color:#fff;border-color:#16803c}.share-option.whatsapp span{color:rgba(255,255,255,.77)}.modal-note{font-size:8px;color:var(--muted);line-height:1.55}.progress-wrap{margin-top:12px}.progress-bar{height:8px;border-radius:99px;background:#e8edf2;overflow:hidden}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .15s ease}.modal-result{margin-top:11px;padding:10px;border-radius:10px;background:var(--green-bg);color:var(--green);font-size:7.5px;font-weight:800;display:none}.modal-result.show{display:block}
+/* Toast */
+.toast{position:fixed;left:50%;bottom:19px;transform:translate(-50%,75px);opacity:0;pointer-events:none;z-index:5000;width:min(calc(100% - 28px),460px);padding:12px 14px;border-radius:12px;color:#fff;font-size:8px;line-height:1.4;transition:.25s ease;box-shadow:0 15px 35px rgba(0,0,0,.2)}.toast.show{transform:translate(-50%,0);opacity:1}.toast.info{background:#172033}.toast.success{background:#176b39}.toast.error{background:#a9231d}
+/* Dark */
+.dark{--bg:#071522;--panel:#0d2034;--panel2:#102941;--text:#f3f7fb;--muted:#9fb0c2;--border:rgba(255,255,255,.09);--shadow:0 18px 50px rgba(0,0,0,.28);--shadow-lg:0 24px 70px rgba(0,0,0,.34)}.dark .topbar{background:rgba(9,24,40,.88);border-color:rgba(255,255,255,.08)}.dark .page-head p,.dark .panel-head p,.dark .page-subtitle,.dark .recent-loc,.dark .notice-message,.dark .history-desc,.dark .settings-card p,.dark .modal-note{color:#9fb0c2}.dark .theme-toggle{background:#0d2238;border-color:rgba(255,255,255,.08)}.dark .theme-btn{color:#a9b8c8}.dark .theme-btn.active{background:var(--gold);color:var(--navy)}.dark .icon-btn,.dark .menu-btn{border-color:rgba(255,255,255,.08)}.dark .btn.primary,.dark .tab.active{background:var(--gold);color:var(--navy);border-color:var(--gold)}.dark .notice-item.unread{background:rgba(212,175,55,.07)}.dark .progress-bar{background:#18314a}
+/* Responsive */
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}.evidence-grid{grid-template-columns:repeat(3,1fr)}.settings-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:850px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.sidebar-overlay.active{display:block}.app{margin-left:0}.menu-btn{display:grid;place-items:center}.mobile-close{display:grid;place-items:center}.theme-toggle{display:flex}.report-grid{grid-template-columns:115px 1fr}.thumb{height:92px}.actions{grid-column:1/-1;flex-direction:row}.actions .btn{flex:1}.evidence-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.topbar{height:66px;padding:0 10px}.topbar-right{gap:6px}.live-pill{display:none}.theme-toggle{display:none}.content{padding:15px 10px 34px}.page-head{flex-direction:column;align-items:flex-start}.page-head h1{font-size:24px}.stats{gap:8px}.stat{padding:11px;gap:8px}.stat-icon{width:34px;height:34px;font-size:14px}.stat-value{font-size:19px}.stat-note{display:none}.toolbar{flex-direction:column}.search{min-width:0}.filters{display:grid;grid-template-columns:1fr 1fr}.report-grid{grid-template-columns:1fr}.thumb{height:198px}.meta{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.modal{padding:8px;align-items:flex-end}.modal-card{max-height:95vh;border-radius:19px 19px 0 0}.response-grid,.share-grid{grid-template-columns:1fr}.modal-foot{flex-direction:column-reverse}.modal-foot .btn{width:100%}.evidence-grid{grid-template-columns:1fr}.settings-grid{grid-template-columns:1fr}.history-item{align-items:flex-start}}
+
+/* ===== SAFEREPORT LUXURY OVERRIDES ===== */
+:root{--gold2:#f3d66b;--ink:#071a2f;--lux:#102b49;--glass:rgba(255,255,255,.72);}
+body{background:radial-gradient(circle at 10% 0%,rgba(212,175,55,.08),transparent 28%),radial-gradient(circle at 100% 0%,rgba(22,61,103,.08),transparent 32%),var(--bg);}
+.sidebar{width:252px;transition:transform .32s cubic-bezier(.2,.8,.2,1),box-shadow .32s ease;box-shadow:16px 0 45px rgba(7,26,47,.12);}
+.sidebar-brand{height:88px;padding:18px 16px;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);}
+.brand-logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,var(--gold),#f6df8d 55%,#b88d19);color:#081a30;box-shadow:0 8px 22px rgba(212,175,55,.18),inset 0 1px 0 rgba(255,255,255,.65);font-size:22px;}
+.nav-item{min-height:43px;border:1px solid transparent;transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease;color:rgba(255,255,255,.62);}
+.nav-item:hover{transform:translateX(2px);border-color:rgba(255,255,255,.06);}
+.nav-item.active{background:linear-gradient(100deg,rgba(212,175,55,.2),rgba(255,255,255,.045));border-color:rgba(212,175,55,.14);box-shadow:inset 3px 0 0 var(--gold),0 7px 18px rgba(0,0,0,.08);}
+.app{margin-left:252px;}
+.topbar{height:72px;padding:0 20px;box-shadow:0 10px 28px rgba(11,31,58,.04);}
+.dark .topbar{box-shadow:0 10px 28px rgba(0,0,0,.18);}
+.content{padding:20px;max-width:1420px;}
+.page-head{margin-bottom:15px;}
+.page-head h1{font-size:27px;}
+.stats{gap:10px;margin-bottom:13px;}
+.stat{padding:13px;border-radius:14px;box-shadow:0 8px 24px rgba(11,31,58,.06);transition:transform .2s ease,box-shadow .2s ease;}
+.stat:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(11,31,58,.09);}
+.dashboard-grid{gap:12px;}
+.panel,.toolbar,.report-card,.notice-panel,.history-panel,.settings-card,.evidence-card,.empty{border-radius:15px;box-shadow:0 9px 26px rgba(11,31,58,.055);}
+.panel-head{padding:12px 14px;}
+.recent-item,.activity-item{padding:11px 14px;}
+.report-card{padding:13px;margin-bottom:8px;}
+.report-grid{grid-template-columns:150px 1fr auto;gap:12px;margin-top:11px;}
+.thumb{height:100px;border-radius:11px;}
+.actions{min-width:88px;}
+.btn{padding:8px 9px;border-radius:9px;transition:transform .18s ease,box-shadow .18s ease;}
+.btn:hover,.evidence-action:hover,.theme-btn:hover,.tab:hover{transform:translateY(-1px);}
+.btn.primary{box-shadow:0 8px 18px rgba(11,31,58,.12);}
+.toolbar{padding:10px;margin-bottom:11px;}
+.evidence-grid{grid-template-columns:repeat(5,1fr);gap:10px;}
+.evidence-preview{height:150px;}
+.evidence-card{transition:transform .2s ease,box-shadow .2s ease;}
+.evidence-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(11,31,58,.09);}
+.evidence-actions{grid-template-columns:repeat(3,1fr);}
+.modal{background:rgba(3,12,23,.68);backdrop-filter:blur(14px);}
+.modal-card{border:1px solid rgba(255,255,255,.12);box-shadow:0 35px 100px rgba(0,0,0,.34);}
+.share-option{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+.share-option:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(11,31,58,.08);border-color:rgba(212,175,55,.35);}
+.live-strip{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--panel);box-shadow:0 4px 14px rgba(11,31,58,.04);}
+.live-pill{animation:pulse 1.15s infinite;}
+.conn-pill{font-weight:900;}
+.connection-glow{animation:connectionGlow 1.5s ease-in-out infinite;}
+@keyframes connectionGlow{0%,100%{box-shadow:0 0 0 0 rgba(53,198,107,.05)}50%{box-shadow:0 0 0 5px rgba(53,198,107,.08)}}
+.new-flash{animation:newFlash 1.2s ease-in-out infinite;}
+@keyframes newFlash{0%,100%{box-shadow:0 0 0 0 rgba(198,40,40,.0)}50%{box-shadow:0 0 0 5px rgba(198,40,40,.07)}}
+.dark .panel,.dark .toolbar,.dark .report-card,.dark .notice-panel,.dark .history-panel,.dark .settings-card,.dark .evidence-card,.dark .empty,.dark .stat{box-shadow:0 16px 40px rgba(0,0,0,.24);}
+@media(max-width:1100px){.evidence-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:850px){.sidebar{width:252px}.app{margin-left:0}.sidebar.open{box-shadow:18px 0 55px rgba(0,0,0,.28)}.content{padding:15px 11px 30px}.report-grid{grid-template-columns:110px 1fr}.thumb{height:88px}.evidence-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.topbar{padding:0 9px}.topbar-right{gap:5px}.content{padding:13px 9px 30px}.stats{grid-template-columns:repeat(2,1fr)}.report-grid{grid-template-columns:1fr}.thumb{height:185px}.evidence-grid{grid-template-columns:1fr 1fr}.evidence-preview{height:145px}}
+@media(max-width:390px){.evidence-grid{grid-template-columns:1fr}.evidence-preview{height:175px}}
+
+.sidebar.collapsed{transform:translateX(-192px)}.sidebar.collapsed .sidebar-nav,.sidebar.collapsed .sidebar-bottom,.sidebar.collapsed .brand-name,.sidebar.collapsed .brand-subtitle,.sidebar.collapsed .mobile-close{opacity:0;pointer-events:none}.sidebar.collapsed .sidebar-brand{justify-content:flex-end}.sidebar.collapsed .brand-logo{transform:translateX(6px)}.app.sidebar-collapsed{margin-left:60px}.sidebar-toggle-desktop{display:flex;align-items:center;justify-content:center;}@media(max-width:850px){.sidebar.collapsed{transform:translateX(-100%)}.app.sidebar-collapsed{margin-left:0}.sidebar-toggle-desktop{display:none}}
+
+/* ===== LUXURY REFRESH LAYER ===== */
+:root{
+  --ink:#142033;--muted2:#8793a5;--gold3:#b99320;--glass:rgba(255,255,255,.78);
+}
+body{background:radial-gradient(circle at 12% 8%,rgba(212,175,55,.05),transparent 28%),var(--bg);}
+.topbar{box-shadow:0 8px 28px rgba(11,31,58,.06);}
+.topbar-right{flex-wrap:wrap;}
+.live-strip{padding:7px 10px;border:1px solid var(--border);border-radius:12px;background:var(--glass);box-shadow:0 5px 18px rgba(11,31,58,.05);}
+.live-dot{box-shadow:0 0 0 5px rgba(198,40,40,.08)}
+.conn-dot.connecting{animation:pulse .8s infinite;}
+.connection-banner{display:none;margin:-4px 0 14px;padding:10px 12px;border:1px solid #efd6a5;background:var(--orange-bg);color:var(--orange);border-radius:12px;font-size:8px;font-weight:800;align-items:center;gap:8px;box-shadow:0 8px 18px rgba(184,107,0,.06)}
+.connection-banner.show{display:flex;}
+.connection-banner .spin-dot{width:8px;height:8px;border-radius:50%;background:var(--orange);animation:pulse .8s infinite;}
+.stat{position:relative;overflow:hidden}.stat:after{content:"";position:absolute;inset:auto 0 0 0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.45}
+.stat-value{letter-spacing:-.5px}.stat-note{line-height:1.3}
+.report-card{background:linear-gradient(180deg,var(--panel),var(--panel2));}.report-card.live-new{box-shadow:0 0 0 1px rgba(198,40,40,.12),var(--shadow)}
+.report-card.priority-critical{border-top:3px solid var(--red)}.report-card.priority-high{border-top:3px solid var(--orange)}
+.priority-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:50px;font-size:6.5px;font-weight:900;margin-left:6px}
+.priority-critical{background:var(--red-bg);color:var(--red)}.priority-high{background:var(--orange-bg);color:var(--orange)}.priority-normal{background:var(--blue-bg);color:var(--blue)}
+.quick-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.quick-actions .btn{padding:8px 9px}
+.evidence-count{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:4px 6px;border-radius:50px;background:var(--panel2);border:1px solid var(--border);font-size:6.5px;font-weight:900;color:var(--muted)}
+.evidence-card{background:linear-gradient(180deg,var(--panel),var(--panel2));transition:.2s ease}.evidence-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.evidence-actions .evidence-action{transition:.16s ease}.evidence-actions .evidence-action:hover{transform:translateY(-1px)}
+.share-grid{grid-template-columns:repeat(3,1fr)}
+.share-option{min-height:92px;display:flex;flex-direction:column;justify-content:flex-end}.share-option strong{font-size:9px}.share-option span{margin-top:5px}
+.modal-result{border:1px solid rgba(22,128,60,.12)}
+.modal-media video,.modal-media img{width:100%;max-height:420px;object-fit:contain;background:#0c151f}
+.modal-media{min-height:190px}
+.detail-value strong{font-weight:900}
+.status-dot.live-status-dot{animation:pulse 1.3s infinite}
+.mobile-actions{display:none}
+@media(max-width:850px){
+  .topbar-right{justify-content:flex-end}.live-strip{padding:6px 8px}.connection-banner{margin-top:2px}.mobile-actions{display:flex;gap:6px;margin-bottom:10px}
+}
+@media(max-width:600px){
+  .share-grid{grid-template-columns:1fr}.live-strip{max-width:48vw;overflow:hidden}.live-pill{display:none}.theme-toggle{display:flex}.theme-btn{padding:6px 7px}
+  .quick-actions{display:grid;grid-template-columns:repeat(2,1fr)}
+}
+
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">🛡️</div>
+    <div>
+      <div class="brand-name">SafeReport</div>
+      <div class="brand-subtitle">SECURITY OPERATIONS</div>
+    </div>
+    <button class="mobile-close" id="mobileClose">×</button>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-title">MAIN</div>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></button>
+    <button class="nav-item" data-page="reports"><span class="nav-icon">📋</span><span>Reports</span><span class="nav-badge alert" id="sidebarNewCount">0</span></button>
+    <button class="nav-item" data-page="notifications"><span class="nav-icon">🔔</span><span>Notifications</span><span class="nav-badge alert" id="sidebarUnreadCount">0</span></button>
+    <button class="nav-item" data-page="evidence"><span class="nav-icon">🗂️</span><span>Evidence</span></button>
+    <button class="nav-item" data-page="history"><span class="nav-icon">🕘</span><span>History</span></button>
+    <div class="nav-title">SYSTEM</div>
+    <button class="nav-item" data-page="settings"><span class="nav-icon">⚙️</span><span>Settings</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="admin-card"><div class="admin-avatar">A</div><div class="admin-info"><strong>Security Admin</strong><span>Live operations</span></div><span class="status-dot"></span></div>
+    <div class="sidebar-footer">SafeReport Security Operations</div>
+  </div>
+</aside>
+
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" id="menuButton" aria-label="Open menu">☰</button><button class="icon-btn sidebar-toggle-desktop" id="sidebarDesktopToggle" aria-label="Toggle sidebar">☷</button>
+      <div>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+        <div class="page-subtitle" id="pageSubtitle">Security operations overview</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-strip"><span class="live-dot"></span><span class="live-pill">LIVE REPORT</span><span>•</span><span class="conn-dot connecting" id="connectionDot"></span><span class="conn-pill connecting" id="connectionText">CONNECTING...</span></div>
+      <div class="theme-toggle"><button class="theme-btn active" data-theme="light">☀️ Day</button><button class="theme-btn" data-theme="dark">🌙 Dark</button></div>
+      <button class="icon-btn" id="notificationButton">🔔<span class="notify-dot hidden" id="headerNotifyDot"></span></button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="connection-banner" id="connectionBanner"><span class="spin-dot"></span><span id="connectionBannerText">Connection interrupted — reconnecting...</span></div>
+    <section class="page active" id="page-dashboard">
+      <div class="page-head"><div><div class="eyebrow">SECURITY MONITORING</div><h1>Security Dashboard</h1><p>Live monitoring of incidents, notifications and response activity.</p></div><div class="live-badge"><span></span> LIVE SECURITY OPERATIONS</div></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-icon blue">📋</div><div><div class="stat-label">TOTAL REPORTS</div><div class="stat-value" id="totalReports">0</div><div class="stat-note">All submitted incidents</div></div></div>
+        <div class="stat"><div class="stat-icon red">🚨</div><div><div class="stat-label">NEW REPORTS</div><div class="stat-value" id="newReports">0</div><div class="stat-note">Awaiting attention</div></div></div>
+        <div class="stat"><div class="stat-icon orange">🔎</div><div><div class="stat-label">IN PROGRESS</div><div class="stat-value" id="progressReports">0</div><div class="stat-note">Being handled</div></div></div>
+        <div class="stat"><div class="stat-icon green">✓</div><div><div class="stat-label">RESOLVED</div><div class="stat-value" id="resolvedReports">0</div><div class="stat-note">Completed incidents</div></div></div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="panel"><div class="panel-head"><div><h2>Recent Reports</h2><p>Newest incidents received</p></div><button class="panel-link" data-go="reports">View all →</button></div><div class="recent" id="recentReports"></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>Live Activity</h2><p>Latest security activity</p></div><span class="live-badge" style="padding:6px 8px;font-size:7px"><span></span> LIVE</span></div><div class="activity" id="activityList"></div></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-reports">
+      <div class="page-head"><div><div class="eyebrow">REPORT CENTER</div><h1>Incident Reports</h1><p>Review incoming reports and manage response actions.</p></div></div>
+      <div class="toolbar"><div class="search"><span>⌕</span><input id="searchInput" placeholder="Search report, location or description..."></div><div class="filters"><select class="filter" id="statusFilter"><option value="all">All status</option><option value="new">New</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option></select><select class="filter" id="reporterFilter"><option value="all">All reporters</option><option value="anonymous">Anonymous</option><option value="named">Named</option></select></div></div>
+      <div id="reportsContainer"></div>
+    </section>
+
+    <section class="page" id="page-notifications">
+      <div class="page-head"><div><div class="eyebrow">ALERT CENTER</div><h1>Notifications</h1><p>Incoming security alerts and system activity.</p></div><button class="btn" id="markAllRead">✓ Mark all as read</button></div>
+      <div class="notice-panel" id="notificationsContainer"></div>
+    </section>
+
+    <section class="page" id="page-evidence">
+      <div class="page-head"><div><div class="eyebrow">DIGITAL EVIDENCE</div><h1>Evidence Center</h1><p>All photos, videos, audio files and voice notes submitted with reports.</p></div></div>
+      <div class="tabs"><button class="tab active" data-evidence-filter="all">All</button><button class="tab" data-evidence-filter="photo">📷 Photos</button><button class="tab" data-evidence-filter="video">🎥 Videos</button><button class="tab" data-evidence-filter="audio">🎵 Audio</button><button class="tab" data-evidence-filter="voice_note">🎙️ Voice Notes</button></div>
+      <div class="evidence-grid" id="evidenceContainer"></div>
+    </section>
+
+    <section class="page" id="page-history">
+      <div class="page-head"><div><div class="eyebrow">AUDIT TRAIL</div><h1>Report History</h1><p>See when reports arrived and how response actions progressed.</p></div></div>
+      <div class="history-panel" id="historyContainer"></div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="page-head"><div><div class="eyebrow">SYSTEM</div><h1>Settings</h1><p>SafeReport platform status and presentation preferences.</p></div></div>
+      <div class="settings-grid">
+        <div class="settings-card"><div class="settings-icon">🛡️</div><h2>Security Operations</h2><p>Live incident monitoring is active. Incoming reports are reflected automatically.</p><div class="settings-status"><span></span> Operations Active</div></div>
+        <div class="settings-card"><div class="settings-icon">📡</div><h2>Live Connection</h2><p>The dashboard continuously monitors its connection to the reporting system.</p><div class="settings-status"><span id="settingsConnectionDot"></span><span id="settingsConnectionText">Connecting...</span></div></div>
+        <div class="settings-card"><div class="settings-icon">🎨</div><h2>Appearance</h2><p>Choose the presentation you prefer from the Day/Dark control at the top of the dashboard.</p><div class="settings-status"><span></span> Personalizable</div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal" id="reportModal">
+  <div class="modal-card">
+    <div class="modal-head"><div><div class="modal-eyebrow">INCIDENT DETAILS</div><h2 id="reportModalTitle">Report</h2></div><button class="modal-close" data-close="reportModal">×</button></div>
+    <div class="modal-body"><div id="modalEvidenceGroup"></div><div class="detail-grid" id="reportDetails"></div><div class="modal-section"><h3>Security Response</h3><div class="response-grid"><select id="responseStatus"><option value="new">New</option><option value="acknowledged">Acknowledged</option><option value="dispatched">Team dispatched</option><option value="investigating">Investigating</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option></select><select id="prioritySelect"><option value="normal">Normal priority</option><option value="high">High priority</option><option value="critical">Critical priority</option></select><input id="assignedTeam" placeholder="Assigned response team"><textarea id="responseNote" placeholder="Enter action taken, findings or response note..."></textarea></div><div class="quick-actions"><button class="btn gold" id="acknowledgeBtn">✓ Acknowledge</button><button class="btn" id="dispatchBtn">🚓 Dispatch Team</button><button class="btn" id="investigateBtn">🔎 Investigating</button><button class="btn primary" id="resolveBtn">✓ Resolve</button></div></div><div class="modal-foot"><button class="btn danger" id="deleteReportBtn">Delete Report</button><button class="btn primary" id="saveResponseBtn">Save Response</button></div></div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal" id="shareModal">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><div><div class="modal-eyebrow">EVIDENCE SHARING</div><h2>Share Evidence</h2></div><button class="modal-close" data-close="shareModal">×</button></div>
+    <div class="modal-body"><div class="modal-note" id="shareDescription">Choose how you want to share this evidence.</div><div class="share-grid"><button class="share-option whatsapp" id="shareWhatsApp"><strong>WhatsApp / Apps</strong><span>Share the actual evidence file through your device's sharing panel when supported.</span></button><button class="share-option" id="shareNative"><strong>More sharing options</strong><span>Open the device share panel for supported apps.</span></button><button class="share-option" id="copyShareInfo"><strong>Copy report information</strong><span>Copy the report reference and evidence details.</span></button></div><div class="modal-result" id="shareResult"></div></div>
+  </div>
+</div>
+
+<!-- DOWNLOAD MODAL -->
+<div class="modal" id="downloadModal">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><div><div class="modal-eyebrow">EVIDENCE TRANSFER</div><h2>Preparing Download</h2></div><button class="modal-close" data-close="downloadModal">×</button></div>
+    <div class="modal-body"><div class="modal-note" id="downloadText">Preparing your evidence file...</div><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" id="downloadProgress"></div></div></div><div class="modal-result" id="downloadResult"></div><div class="modal-foot"><button class="btn" data-close="downloadModal">Close</button><button class="btn primary hidden" id="retryDownloadBtn">Try Again</button></div></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal" id="confirmModal">
+  <div class="modal-card small-modal">
+    <div class="modal-head"><div><div class="modal-eyebrow">CONFIRM ACTION</div><h2 id="confirmTitle">Confirm</h2></div><button class="modal-close" data-close="confirmModal">×</button></div>
+    <div class="modal-body"><div class="modal-note" id="confirmMessage"></div><div class="modal-foot"><button class="btn confirm-neutral" id="confirmCancel">Cancel</button><button class="btn confirm-danger" id="confirmOk">Continue</button></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { getDatabase, ref, onValue, update, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyDRyARuMsozNxeesgghamI3RZTp24JE5Yo",
+  authDomain:"security-5df3a.firebaseapp.com",
+  projectId:"security-5df3a",
+  storageBucket:"security-5df3a.firebasestorage.app",
+  messagingSenderId:"806643033282",
+  appId:"1:806643033282:web:a622588bf156f0e137075b",
+  measurementId:"G-MRDM9ZNNGL"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+
+let allReports=[];
+let allNotifications=[];
+let currentReport=null;
+let currentEvidenceFilter="all";
+let pendingDownload=null;
+let pendingShare=null;
+let confirmResolve=null;
+let lastSeenReportIds=new Set();
+
+const pageMeta={
+ dashboard:["Dashboard","Security operations overview"],
+ reports:["Reports","Review incoming incidents and response actions"],
+ notifications:["Notifications","Incoming security alerts and system activity"],
+ evidence:["Evidence","Photos, videos, audio files and voice notes"],
+ history:["History","Report and response audit trail"],
+ settings:["Settings","SafeReport platform and presentation settings"]
+};
+
+function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function getTime(v){if(typeof v==="number")return v;if(v?.seconds)return v.seconds*1000;const t=new Date(v||0).getTime();return Number.isNaN(t)?0:t}
+function formatDate(v){const t=getTime(v);return t?new Date(t).toLocaleString([], {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Just now"}
+function normalizeStatus(v){return String(v||"new").toLowerCase().replace(/\s+/g,"_")}
+function statusText(v){const s=normalizeStatus(v);return ({new:"New",acknowledged:"Acknowledged",dispatched:"Team dispatched",investigating:"Investigating",in_progress:"In progress",resolved:"Resolved",assigned:"Assigned",responding:"Responding",closed:"Closed"}[s]||s.replace(/_/g," ").replace(/\b\w/g,m=>m.toUpperCase()))}
+function setText(sel,val){$$(sel).forEach(e=>e.textContent=val??"")}
+
+/* ========================= THEME ========================= */
+const savedTheme=localStorage.getItem("saferReportTheme")||"light";
+function applyTheme(theme){
+  document.body.classList.toggle("dark",theme==="dark");
+  $$("[data-theme]").forEach(b=>b.classList.toggle("active",b.dataset.theme===theme));
+  localStorage.setItem("saferReportTheme",theme);
+}
+applyTheme(savedTheme);
+$$("[data-theme]").forEach(b=>b.addEventListener("click",()=>applyTheme(b.dataset.theme)));
+
+/* ========================= SIDEBAR ======================= */
+function openSidebar(){
+  const s=$("#sidebar"),o=$("#sidebarOverlay");
+  s.classList.add("open");o.classList.add("active");document.body.classList.add("no-scroll");
+}
+function closeSidebar(){
+  const s=$("#sidebar"),o=$("#sidebarOverlay");
+  s.classList.remove("open");o.classList.remove("active");document.body.classList.remove("no-scroll");
+}
+$("#menuButton")?.addEventListener("click",openSidebar);
+$("#mobileClose")?.addEventListener("click",closeSidebar);
+$("#sidebarOverlay")?.addEventListener("click",closeSidebar);
+
+function showPage(page){
+  if(!pageMeta[page])return;
+  $$(".page").forEach(p=>p.classList.remove("active"));
+  $("#page-"+page)?.classList.add("active");
+  $$(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===page));
+  $("#pageTitle").textContent=pageMeta[page][0];
+  $("#pageSubtitle").textContent=pageMeta[page][1];
+  closeSidebar();
+  window.scrollTo({top:0,behavior:"smooth"});
+  if(page==="reports")renderReports();
+  if(page==="notifications")renderNotifications();
+  if(page==="evidence")renderEvidence();
+  if(page==="history")renderHistory();
+  if(page==="dashboard")renderDashboard();
+}
+$$(".nav-item").forEach(n=>n.addEventListener("click",()=>showPage(n.dataset.page)));
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.go)));
+$("#notificationButton")?.addEventListener("click",()=>showPage("notifications"));
+
+/* ========================= CONNECTION ==================== */
+function setConnection(connected){
+  const dot=$("#connectionDot"),text=$("#connectionText"),sd=$("#settingsConnectionDot"),st=$("#settingsConnectionText"),banner=$("#connectionBanner"),bannerText=$("#connectionBannerText");
+  dot.classList.remove("connecting","offline"); text.classList.remove("connecting","offline");
+  if(connected){
+    dot.style.background="#35c66b";text.textContent="CONNECTED";text.classList.add("conn-pill");
+    if(sd)sd.style.background="#35c66b";if(st)st.textContent="Connected";
+    banner?.classList.remove("show");
+  }else{
+    dot.style.background="#e8a21a";dot.classList.add("connecting");text.textContent="CONNECTING...";text.classList.add("connecting");
+    if(sd)sd.style.background="#e8a21a";if(st)st.textContent="Connecting...";
+    bannerText.textContent=navigator.onLine?"Live connection interrupted — attempting to reconnect...":"Network connection unavailable — waiting for network...";
+    banner?.classList.add("show");
+  }
+}
+onValue(ref(db,".info/connected"),snap=>setConnection(snap.val()===true),()=>setConnection(false));
+window.addEventListener("online",()=>setConnection(true));
+window.addEventListener("offline",()=>setConnection(false));
+
+/* ========================= REPORTS ======================== */
+onValue(ref(db,"reports"),snap=>{
+  const data=snap.val()||{};
+  const next=Object.entries(data).map(([id,report])=>({id,...report})).sort((a,b)=>getTime(b.createdAt)-getTime(a.createdAt));
+  const newIds=next.filter(r=>normalizeStatus(r.status)==="new").map(r=>r.id);
+  const freshArrival=newIds.some(id=>!lastSeenReportIds.has(id));
+  allReports=next;
+  lastSeenReportIds=new Set(next.map(r=>r.id));
+  updateStats();renderReports();renderDashboard();renderEvidence();renderHistory();
+  if(freshArrival && document.visibilityState!=="visible") showToast("New security report received.","success");
+},{})
+
+function updateStats(){
+  const total=allReports.length;
+  const fresh=allReports.filter(r=>normalizeStatus(r.status)==="new").length;
+  const progress=allReports.filter(r=>["acknowledged","dispatched","investigating","in_progress","assigned","responding"].includes(normalizeStatus(r.status))).length;
+  const resolved=allReports.filter(r=>normalizeStatus(r.status)==="resolved").length;
+  setText("#totalReports",total);setText("#newReports",fresh);setText("#progressReports",progress);setText("#resolvedReports",resolved);setText("#sidebarNewCount",fresh);
+}
+function matchesFilters(r){
+  const q=$("#searchInput").value.trim().toLowerCase(),st=$("#statusFilter").value,rt=$("#reporterFilter").value;
+  const text=[r.id,r.description,r.location?.address,r.reporter?.name,r.reporter?.phone,r.priority].filter(Boolean).join(" ").toLowerCase();
+  return (!q||text.includes(q))&&(st==="all"||normalizeStatus(r.status)===st)&&(rt==="all"||(r.reporter?.type||"anonymous")===rt);
+}
+$("#searchInput")?.addEventListener("input",renderReports);$("#statusFilter")?.addEventListener("change",renderReports);$("#reporterFilter")?.addEventListener("change",renderReports);
+
+/* ========================= EVIDENCE ======================= */
+function evidenceEntries(evidence){
+  if(!evidence||typeof evidence!=="object")return[];
+  const keys=["photo","video","audio","voiceNote","voice_note"];const out=[];
+  for(const k of keys)if(evidence[k])out.push({key:k,item:evidence[k]});
+  if(!out.length&&(evidence.data||evidence.url||evidence.downloadURL))out.push({key:null,item:evidence});
+  return out;
+}
+function evidenceType(item,key){
+  const c=String(item?.contentType||"").toLowerCase(),t=String(item?.type||"").toLowerCase();
+  if(t==="video"||c.startsWith("video/"))return"video";
+  if(t==="voice"||t==="voice_note"||key==="voiceNote"||key==="voice_note")return"voice_note";
+  if(t==="audio"||c.startsWith("audio/"))return"audio";
+  if(t==="photo"||t==="image"||c.startsWith("image/"))return"photo";
+  if(key==="video")return"video";if(key==="audio")return"audio";return"photo";
+}
+function evidenceData(item){return String(item?.data||item?.url||item?.downloadURL||item?.downloadUrl||item?.src||"")}
+function evidenceLabel(type){return ({photo:"Photo",video:"Video",audio:"Audio",voice_note:"Voice Note"}[type]||"Evidence")}
+function evidenceIcon(type){return ({photo:"📷",video:"🎥",audio:"🎵",voice_note:"🎙️"}[type]||"📎")}
+function evidenceName(item,type){return item?.fileName||item?.name||item?.filename||({photo:"photo-evidence.jpg",video:"video-evidence.mp4",audio:"audio-evidence.mp3",voice_note:"voice-note.webm"}[type]||"evidence-file")}
+function priorityOf(r){return String(r.priority||"normal").toLowerCase()}
+function priorityText(p){return p==="critical"?"Critical":p==="high"?"High":"Normal"}
+function priorityClass(p){return p==="critical"?"priority-critical":p==="high"?"priority-high":"priority-normal"}
+function previewHTML(item,key){
+  const type=evidenceType(item,key),data=evidenceData(item);if(!data)return `<div class="thumb"><div class="audio-thumb"><span>⚠️</span>Evidence unavailable</div></div>`;
+  if(type==="photo")return `<div class="thumb"><img src="${escapeHTML(data)}" alt="Evidence"></div>`;
+  if(type==="video")return `<div class="thumb"><video src="${escapeHTML(data)}" controls muted playsinline preload="metadata"></video></div>`;
+  return `<div class="thumb"><div class="audio-thumb"><span>${evidenceIcon(type)}</span>${escapeHTML(evidenceLabel(type).toUpperCase())}</div></div>`;
+}
+
+function reportCard(r){
+  const status=normalizeStatus(r.status),entries=evidenceEntries(r.evidence),primary=entries[0],type=primary?evidenceType(primary.item,primary.key):null,pc=priorityClass(priorityOf(r));
+  return `<article class="report-card ${status==="new"?"live-new":""} ${pc}">
+    <div class="report-top"><div><div class="report-id">${escapeHTML(r.reportId||r.id)} <span class="priority-badge ${pc}">${priorityText(priorityOf(r))}</span><span class="evidence-count">📎 ${entries.length} evidence</span></div><div class="report-time">${formatDate(r.createdAt)}</div></div><span class="badge ${status}">${escapeHTML(statusText(status))}</span></div>
+    <div class="report-grid">${primary?previewHTML(primary.item,primary.key):`<div class="thumb"><div class="audio-thumb"><span>📎</span>NO EVIDENCE</div></div>`}
+    <div><div class="desc">${escapeHTML(r.description||"No description provided.")}</div><div class="meta"><div><div class="meta-label">Reporter</div><div class="meta-value">${escapeHTML(r.reporter?.type==="named"?r.reporter?.name||"Named":"Anonymous")}</div></div><div><div class="meta-label">Phone</div><div class="meta-value">${escapeHTML(r.reporter?.phone||"Not provided")}</div></div><div><div class="meta-label">Location</div><div class="meta-value">${escapeHTML(r.location?.address||"Not provided")}</div></div><div><div class="meta-label">Evidence</div><div class="meta-value">${primary?escapeHTML(evidenceLabel(type)):"None"}</div></div></div></div>
+    <div class="actions"><button class="btn primary" data-open-report="${escapeHTML(r.id)}">Open report</button><button class="btn" data-share-report="${escapeHTML(r.id)}">Share</button><button class="btn danger" data-delete-report="${escapeHTML(r.id)}">Delete</button></div></div></article>`;
+}
+function renderReports(){
+  const box=$("#reportsContainer");if(!box)return;const list=allReports.filter(matchesFilters);
+  if(!list.length){box.innerHTML=`<div class="empty" style="padding:50px 20px;text-align:center"><div style="font-size:28px">📭</div><strong style="display:block;margin-top:8px;font-size:12px">No reports found</strong><p style="margin-top:5px;color:var(--muted);font-size:8px">There are no reports matching the current filters.</p></div>`;return}
+  box.innerHTML=list.map(reportCard).join("");
+  $$('[data-open-report]').forEach(b=>b.addEventListener('click',()=>openReport(b.dataset.openReport)));
+  $$('[data-share-report]').forEach(b=>b.addEventListener('click',()=>openReportThenShare(b.dataset.shareReport)));
+  $$('[data-delete-report]').forEach(b=>b.addEventListener('click',()=>confirmDeleteReport(b.dataset.deleteReport)));
+}
+function openReportThenShare(id){const r=allReports.find(x=>x.id===id);if(!r)return;openReport(id);setTimeout(()=>{const e=evidenceEntries(r.evidence)[0];if(e)openShareForEvidence(r.id,e.key,e.item)},50)}
+
+/* ========================= DASHBOARD ===================== */
+function renderDashboard(){
+  const recent=$("#recentReports"),acts=$("#activityList");if(!recent||!acts)return;
+  recent.innerHTML=allReports.slice(0,7).map(r=>{const e=evidenceEntries(r.evidence)[0],t=e?evidenceType(e.item,e.key):null;return `<div class="recent-item" data-recent="${escapeHTML(r.id)}"><div class="recent-icon">${t?evidenceIcon(t):"📎"}</div><div class="recent-info"><div class="recent-id">${escapeHTML(r.reportId||r.id)}</div><div class="recent-loc">${escapeHTML(r.location?.address||"No location")}</div></div><div><div class="badge ${normalizeStatus(r.status)}">${escapeHTML(statusText(r.status))}</div><div class="recent-time">${formatDate(r.createdAt)}</div></div></div>`}).join("")||`<div style="padding:30px;text-align:center;color:var(--muted);font-size:8px">No recent reports.</div>`;
+  $$('[data-recent]').forEach(b=>b.addEventListener('click',()=>openReport(b.dataset.recent)));
+  const events=[];allReports.forEach(r=>{events.push({time:r.createdAt,title:"New security report received",desc:r.id});if(r.response?.respondedAt)events.push({time:r.response.respondedAt,title:`Report ${statusText(r.status)}`,desc:r.id+(r.response?.action?` • ${r.response.action}`:"")})});
+  acts.innerHTML=events.sort((a,b)=>getTime(b.time)-getTime(a.time)).slice(0,8).map(e=>`<div class="activity-item"><div class="activity-line"></div><div><div class="activity-title">${escapeHTML(e.title)}</div><div class="activity-time">${escapeHTML(e.desc)} • ${formatDate(e.time)}</div></div></div>`).join("")||`<div style="padding:30px;text-align:center;color:var(--muted);font-size:8px">No activity yet.</div>`;
+}
+
+/* ========================= REPORT MODAL =================== */
+function buildMediaBlock(report){
+  const entries=evidenceEntries(report.evidence);if(!entries.length)return `<div class="modal-media"><div class="modal-audio"><span>📎</span>No evidence attached</div></div>`;
+  return entries.map(({key,item})=>{const type=evidenceType(item,key),data=evidenceData(item),name=evidenceName(item,type);if(!data)return "";let media="";
+    if(type==="photo")media=`<img src="${escapeHTML(data)}" alt="Evidence">`;
+    else if(type==="video")media=`<video src="${escapeHTML(data)}" controls playsinline preload="metadata"></video>`;
+    else media=`<div class="modal-audio"><span>${evidenceIcon(type)}</span><strong>${escapeHTML(evidenceLabel(type))}</strong><audio src="${escapeHTML(data)}" controls preload="metadata"></audio></div>`;
+    return `<div class="modal-media" style="margin-bottom:9px">${media}</div><div style="display:flex;gap:6px;margin:-2px 0 9px;flex-wrap:wrap;align-items:center"><span class="badge ${normalizeStatus(report.status)}">${escapeHTML(evidenceLabel(type))}</span><span style="font-size:7px;color:var(--muted)">${escapeHTML(name)}</span><button class="btn" data-modal-download data-report-id="${escapeHTML(report.id)}" data-evidence-key="${escapeHTML(key||"")}">Download</button><button class="btn" data-modal-share data-report-id="${escapeHTML(report.id)}" data-evidence-key="${escapeHTML(key||"")}">Share</button><button class="btn danger" data-modal-delete-evidence data-report-id="${escapeHTML(report.id)}" data-evidence-key="${escapeHTML(key||"")}">Delete</button></div>`;
+  }).join("");
+}
+function openReport(id){
+  const r=allReports.find(x=>x.id===id);if(!r)return;currentReport=r;$("#reportModalTitle").textContent=r.reportId||r.id;$("#modalEvidenceGroup").innerHTML=buildMediaBlock(r);
+  $("#reportDetails").innerHTML=`<div class="detail"><div class="detail-label">Report ID</div><div class="detail-value">${escapeHTML(r.reportId||r.id)}</div></div><div class="detail"><div class="detail-label">Received</div><div class="detail-value">${formatDate(r.createdAt)}</div></div><div class="detail"><div class="detail-label">Reporter</div><div class="detail-value">${escapeHTML(r.reporter?.type==="named"?r.reporter?.name||"Named":"Anonymous")}</div></div><div class="detail"><div class="detail-label">Phone</div><div class="detail-value">${escapeHTML(r.reporter?.phone||"Not provided")}</div></div><div class="detail"><div class="detail-label">Location</div><div class="detail-value">${escapeHTML(r.location?.address||"Not provided")}</div></div><div class="detail"><div class="detail-label">Priority</div><div class="detail-value">${escapeHTML(priorityText(priorityOf(r)))}</div></div><div class="detail"><div class="detail-label">Status</div><div class="detail-value">${escapeHTML(statusText(r.status))}</div></div><div class="detail"><div class="detail-label">Evidence count</div><div class="detail-value">${evidenceEntries(r.evidence).length}</div></div><div class="detail" style="grid-column:1/-1"><div class="detail-label">Description</div><div class="detail-value">${escapeHTML(r.description||"No description provided.")}</div></div>`;
+  $("#responseStatus").value=normalizeStatus(r.status);$("#prioritySelect").value=priorityOf(r);$("#assignedTeam").value=r.response?.assignedTeam||"";$("#responseNote").value=r.response?.note||"";bindModalEvidenceButtons();openModal("reportModal");
+}
+function bindModalEvidenceButtons(){$$('[data-modal-download]').forEach(b=>b.addEventListener('click',()=>downloadByKey(b.dataset.reportId,b.dataset.evidenceKey)));$$('[data-modal-share]').forEach(b=>b.addEventListener('click',()=>shareByKey(b.dataset.reportId,b.dataset.evidenceKey)));$$('[data-modal-delete-evidence]').forEach(b=>b.addEventListener('click',()=>confirmDeleteEvidence(b.dataset.reportId,b.dataset.evidenceKey)))}
+
+/* ========================= RESPONSE ======================= */
+async function saveResponse(statusOverride=null){
+  if(!currentReport)return;
+  const status=statusOverride||$("#responseStatus").value,team=$("#assignedTeam").value.trim(),note=$("#responseNote").value.trim(),priority=$("#prioritySelect").value;
+  try{
+    await update(ref(db,`reports/${currentReport.id}`),{status,priority,updatedAt:serverTimestamp(),"response/assignedTeam":team,"response/action":status==="resolved"?"Report resolved":status==="dispatched"?"Response team dispatched":status==="investigating"?"Investigation in progress":status==="acknowledged"?"Report acknowledged":status==="in_progress"?"Response in progress":"","response/note":note,"response/respondedBy":"Authorized Security Team","response/respondedAt":serverTimestamp()});
+    showToast(`Report ${statusText(status).toLowerCase()}.`,"success");
+    closeModal("reportModal");
+  }catch(e){console.error(e);showToast("Unable to save the response.","error")}
+}
+$("#saveResponseBtn").addEventListener("click",()=>saveResponse());
+$("#acknowledgeBtn").addEventListener("click",()=>saveResponse("acknowledged"));
+$("#dispatchBtn").addEventListener("click",()=>saveResponse("dispatched"));
+$("#investigateBtn").addEventListener("click",()=>saveResponse("investigating"));
+$("#resolveBtn").addEventListener("click",()=>saveResponse("resolved"));
+$("#deleteReportBtn").addEventListener("click",()=>currentReport&&confirmDeleteReport(currentReport.id));
+
+/* ========================= EVIDENCE CENTER ================= */
+function evidenceItems(){const out=[];allReports.forEach(r=>evidenceEntries(r.evidence).forEach(e=>{const type=evidenceType(e.item,e.key),data=evidenceData(e.item);if(data)out.push({report:r,evidence:e.item,key:e.key,type})}));return out}
+function renderEvidence(){
+  const items=evidenceItems().filter(x=>currentEvidenceFilter==="all"||x.type===currentEvidenceFilter),c=$("#evidenceContainer");if(!items.length){c.innerHTML='<div class="empty" style="grid-column:1/-1;padding:50px;text-align:center"><div style="font-size:28px">🗂️</div><strong style="display:block;margin-top:8px;font-size:12px">No evidence available</strong><p style="margin-top:5px;color:var(--muted);font-size:8px">Evidence matching this section will appear here.</p></div>';return}
+  c.innerHTML=items.map(x=>{const name=evidenceName(x.evidence,x.type),data=evidenceData(x.evidence);let media=x.type==="photo"?`<img src="${escapeHTML(data)}" alt="Evidence">`:x.type==="video"?`<video src="${escapeHTML(data)}" controls muted playsinline preload="metadata"></video>`:`<div class="evidence-audio-box"><span>${evidenceIcon(x.type)}</span>${escapeHTML(evidenceLabel(x.type).toUpperCase())}</div>`;return`<div class="evidence-card"><div class="evidence-preview">${media}</div><div class="evidence-info"><div class="evidence-type">${escapeHTML(evidenceLabel(x.type))}</div><div class="evidence-name" title="${escapeHTML(name)}">${escapeHTML(name)}</div><div class="evidence-report">Report: ${escapeHTML(x.report.id)}</div><div class="evidence-report">${escapeHTML(x.report.location?.address||"No location")}</div>${x.type==="audio"||x.type==="voice_note"?`<audio src="${escapeHTML(data)}" controls style="width:100%;margin-top:8px;height:30px"></audio>`:""}<div class="evidence-actions"><button class="evidence-action" data-ev-download data-r="${escapeHTML(x.report.id)}" data-k="${escapeHTML(x.key||"")}">Download</button><button class="evidence-action" data-ev-share data-r="${escapeHTML(x.report.id)}" data-k="${escapeHTML(x.key||"")}">Share</button><button class="evidence-action delete" data-ev-delete data-r="${escapeHTML(x.report.id)}" data-k="${escapeHTML(x.key||"")}">Delete</button></div></div></div>`}).join("");
+  $$('[data-ev-download]').forEach(b=>b.addEventListener('click',()=>downloadByKey(b.dataset.r,b.dataset.k)));$$('[data-ev-share]').forEach(b=>b.addEventListener('click',()=>shareByKey(b.dataset.r,b.dataset.k)));$$('[data-ev-delete]').forEach(b=>b.addEventListener('click',()=>confirmDeleteEvidence(b.dataset.r,b.dataset.k)));
+}
+$$('[data-evidence-filter]').forEach(b=>b.addEventListener('click',()=>{currentEvidenceFilter=b.dataset.evidenceFilter;$$('[data-evidence-filter]').forEach(x=>x.classList.toggle('active',x===b));renderEvidence()}));
+
+/* ========================= NOTIFICATIONS ================== */
+onValue(ref(db,"notifications"),snap=>{const d=snap.val()||{};allNotifications=Object.entries(d).map(([id,n])=>({id,...n})).sort((a,b)=>getTime(b.createdAt)-getTime(a.createdAt));updateNotificationCount();renderNotifications();renderHistory();renderDashboard()});
+function updateNotificationCount(){const unread=allNotifications.filter(n=>n.read!==true).length;setText("#sidebarUnreadCount",unread);$("#headerNotifyDot").classList.toggle("hidden",unread===0);$("#notificationButton")?.classList.toggle("new-flash",unread>0)}
+function renderNotifications(){
+  const c=$("#notificationsContainer");if(!c)return;if(!allNotifications.length){c.innerHTML='<div class="empty" style="border:0;border-radius:0;box-shadow:none;padding:50px;text-align:center"><div style="font-size:28px">🔔</div><strong style="display:block;margin-top:8px;font-size:12px">No notifications</strong><p style="margin-top:5px;color:var(--muted);font-size:8px">New security alerts will appear here.</p></div>';return}
+  c.innerHTML=allNotifications.map(n=>`<div class="notice-item ${n.read!==true?'unread':''}"><div class="notice-icon">${n.read!==true?'🚨':'🔔'}</div><div class="notice-main"><div class="notice-title">${escapeHTML(n.title||"Security Notification")}</div><div class="notice-message">${escapeHTML(n.message||"")}</div><div class="notice-time">${formatDate(n.createdAt)}</div></div><div class="notice-action">${n.read!==true?`<button class="btn" data-read="${escapeHTML(n.id)}">Mark read</button>`:`<span style="font-size:7px;color:var(--green);font-weight:900">READ</span>`}</div></div>`).join("");
+  $$('[data-read]').forEach(b=>b.addEventListener('click',async()=>{try{await update(ref(db,`notifications/${b.dataset.read}`),{read:true,readAt:serverTimestamp()});showToast("Notification marked as read.","success")}catch(e){showToast("Unable to update notification.","error")}}));
+}
+$("#markAllRead").addEventListener("click",async()=>{const unread=allNotifications.filter(n=>n.read!==true);if(!unread.length){showToast("No unread notifications.","info");return}const changes={};unread.forEach(n=>{changes[`notifications/${n.id}/read`]=true;changes[`notifications/${n.id}/readAt`]=serverTimestamp()});try{await update(ref(db),changes);showToast("All notifications marked as read.","success")}catch(e){showToast("Unable to update notifications.","error")}});
+
+/* ========================= HISTORY ======================== */
+function renderHistory(){
+  const events=[];allReports.forEach(r=>{events.push({time:r.createdAt,icon:"📥",title:"New security report received",desc:`${r.id}${r.location?.address?` • ${r.location.address}`:""}`,reportId:r.id});if(r.response?.respondedAt)events.push({time:r.response.respondedAt,icon:r.status==="resolved"?"✓":"🔎",title:`Report ${statusText(r.status)}`,desc:`${r.id}${r.response?.action?` • ${r.response.action}`:""}`,reportId:r.id})});allNotifications.forEach(n=>events.push({time:n.createdAt,icon:"🔔",title:"Security notification",desc:n.message||n.title||"Notification received."}));events.sort((a,b)=>getTime(b.time)-getTime(a.time));
+  const c=$("#historyContainer");if(!c)return;if(!events.length){c.innerHTML='<div style="padding:50px;text-align:center;color:var(--muted);font-size:8px">No history yet.</div>';return}c.innerHTML=events.map(e=>`<div class="history-item" ${e.reportId?`data-history-report="${escapeHTML(e.reportId)}"`:""}><div class="history-icon">${e.icon}</div><div class="history-main"><div class="history-title">${escapeHTML(e.title)}</div><div class="history-desc">${escapeHTML(e.desc)}</div><div class="history-time">${formatDate(e.time)}</div></div></div>`).join("");$$('[data-history-report]').forEach(b=>b.addEventListener('click',()=>openReport(b.dataset.historyReport)));
+}
+
+/* ========================= MODALS ========================= */
+function openModal(id){const m=$("#"+id);if(!m)return;m.classList.add("active");document.body.classList.add("no-scroll")}
+function closeModal(id){const m=$("#"+id);if(!m)return;m.classList.remove("active");if(!$('.modal.active'))document.body.classList.remove("no-scroll");if(id==="confirmModal"&&confirmResolve){const r=confirmResolve;confirmResolve=null;r(false)}}
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));$$('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.modal.active').forEach(m=>closeModal(m.id))});
+function confirmModal(title,message){$("#confirmTitle").textContent=title;$("#confirmMessage").textContent=message;openModal("confirmModal");return new Promise(resolve=>{confirmResolve=resolve})}
+$("#confirmCancel").addEventListener('click',()=>closeModal('confirmModal'));$("#confirmOk").addEventListener('click',()=>{if(confirmResolve){const r=confirmResolve;confirmResolve=null;r(true)}closeModal('confirmModal')});
+
+/* ========================= DELETE ========================= */
+async function confirmDeleteReport(id){const report=allReports.find(r=>r.id===id);if(!report)return;const ok=await confirmModal("Delete Report",`Delete ${report.reportId||report.id} and all attached evidence from the system?`);if(!ok)return;try{await remove(ref(db,`reports/${id}`));if(currentReport?.id===id)closeModal('reportModal');showToast("Report deleted successfully.","success")}catch(e){showToast("Unable to delete the report.","error")}}
+function findEvidence(reportId,key){const r=allReports.find(x=>x.id===reportId);if(!r)return null;const hit=evidenceEntries(r.evidence).find(e=>(e.key||"")===(key||""));return hit?{report:r,key:hit.key,item:hit.item}:null}
+async function confirmDeleteEvidence(reportId,key){const found=findEvidence(reportId,key);if(!found)return;const label=evidenceLabel(evidenceType(found.item,found.key)).toLowerCase();const ok=await confirmModal("Delete Evidence",`Remove this ${label} from ${found.report.reportId||found.report.id}?`);if(!ok)return;try{if(found.key)await remove(ref(db,`reports/${reportId}/evidence/${found.key}`));else await remove(ref(db,`reports/${reportId}/evidence`));showToast("Evidence deleted successfully.","success");if(currentReport?.id===reportId)openReport(reportId);else renderEvidence()}catch(e){showToast("Unable to delete evidence.","error")}}
+
+/* ========================= DOWNLOAD ======================= */
+function filenameFor(item,type){let n=evidenceName(item,type);if(!/\.[a-z0-9]+$/i.test(n))n+=type==="photo"?".jpg":type==="video"?".mp4":type==="audio"?".mp3":".webm";return n.replace(/[<>:"/\\|?*\x00-\x1F]/g,"_").replace(/\s+/g,"_")}
+function downloadByKey(reportId,key){const f=findEvidence(reportId,key);if(f)downloadEvidence(f.item,filenameFor(f.item,evidenceType(f.item,key)))}
+async function dataToBlob(data,contentType){
+  if(!data)throw new Error("Evidence data unavailable");
+  if(data.startsWith("data:")){
+    const comma=data.indexOf(",");if(comma<0)throw new Error("Invalid evidence data");const header=data.slice(5,comma),payload=data.slice(comma+1),mime=(header.match(/^([^;]+)/)||[])[1]||contentType||"application/octet-stream",isBase64=header.includes(";base64");
+    if(isBase64){const binary=atob(payload),bytes=new Uint8Array(binary.length),chunk=65536;for(let offset=0;offset<binary.length;offset+=chunk){const end=Math.min(offset+chunk,binary.length);for(let i=offset;i<end;i++)bytes[i]=binary.charCodeAt(i)}return new Blob([bytes],{type:mime})}
+    return new Blob([decodeURIComponent(payload)],{type:mime});
+  }
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);try{const response=await fetch(data,{signal:controller.signal,cache:"no-store"});if(!response.ok)throw new Error("Unable to read evidence");const blob=await response.blob();return contentType&&(!blob.type||blob.type==="application/octet-stream")?new Blob([blob],{type:contentType}):blob}finally{clearTimeout(timer)}
+}
+async function downloadEvidence(item,filename){
+  const data=evidenceData(item);if(!data){showToast("Evidence data is unavailable.","error");return}
+  pendingDownload={item,filename};const text=$("#downloadText"),progress=$("#downloadProgress"),result=$("#downloadResult"),retry=$("#retryDownloadBtn");text.textContent=`Preparing ${filename}...`;progress.style.width="8%";result.classList.remove("show");retry.classList.add("hidden");openModal("downloadModal");
+  try{
+    const blob=await dataToBlob(data,item.contentType);progress.style.width="58%";const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=filename;link.rel="noopener";link.style.position="fixed";link.style.left="-9999px";document.body.appendChild(link);link.click();link.remove();progress.style.width="100%";text.textContent="Download started";result.textContent="The evidence file is ready on your device. Check your Downloads/Files app or Gallery where supported.";result.classList.add("show");setTimeout(()=>URL.revokeObjectURL(url),15000);showToast("Download started.","success");
+  }catch(e){console.error(e);progress.style.width="100%";text.textContent="Download could not be completed";result.textContent=e?.name==="AbortError"?"The file transfer timed out. Please try again.":"Your device blocked this file transfer. Use Share or try the download again.";result.classList.add("show");retry.classList.remove("hidden");showToast("Download could not be completed.","error")}
+}
+$("#retryDownloadBtn").addEventListener("click",()=>pendingDownload&&downloadEvidence(pendingDownload.item,pendingDownload.filename));
+
+/* =========================== SHARE ======================== */
+function shareByKey(reportId,key){const f=findEvidence(reportId,key);if(f)openShareForEvidence(reportId,key,f.item)}
+function openShareForEvidence(reportId,key,item){pendingShare={reportId,key,item};const type=evidenceType(item,key),name=filenameFor(item,type);$("#shareDescription").textContent=`${evidenceLabel(type)} • ${name}`;$("#shareResult").classList.remove("show");openModal("shareModal")}
+async function shareActualFile(){
+  if(!pendingShare)return;const {reportId,key,item}=pendingShare,data=evidenceData(item),type=evidenceType(item,key),name=filenameFor(item,type),result=$("#shareResult");if(!data){showToast("Evidence data is unavailable.","error");return}
+  try{
+    const blob=await dataToBlob(data,item.contentType),file=new File([blob],name,{type:blob.type||item.contentType||"application/octet-stream"}),report=allReports.find(r=>r.id===reportId),text=`SafeReport Incident ${reportId}\nLocation: ${report?.location?.address||"Not provided"}\nDescription: ${report?.description||"Not provided"}\nEvidence: ${name}`;
+    if(navigator.share){
+      if(navigator.canShare?.({files:[file]})){await navigator.share({title:`SafeReport ${reportId}`,text,files:[file]});result.textContent="Choose WhatsApp, Telegram, Messenger or another available app from your device's share panel.";result.classList.add("show");return}
+      await navigator.share({title:`SafeReport ${reportId}`,text});result.textContent="Your device share panel opened. This browser cannot attach the evidence file directly; use Download to save it first.";result.classList.add("show");return;
+    }
+    result.textContent="Direct device sharing is not supported in this browser. Download the evidence first, then attach it in WhatsApp or another app.";result.classList.add("show");showToast("Device sharing is not supported here.","error");
+  }catch(e){if(e?.name==="AbortError")return;console.error(e);result.textContent="The device could not share this evidence. Download it first and attach it from your device.";result.classList.add("show");showToast("Sharing could not be completed.","error")}
+}
+$("#shareWhatsApp").addEventListener("click",shareActualFile);$("#shareNative").addEventListener("click",shareActualFile);$("#copyShareInfo").addEventListener("click",async()=>{if(!pendingShare)return;const r=allReports.find(x=>x.id===pendingShare.reportId),name=filenameFor(pendingShare.item,evidenceType(pendingShare.item,pendingShare.key)),text=`SafeReport Incident ${pendingShare.reportId}\nLocation: ${r?.location?.address||"Not provided"}\nDescription: ${r?.description||"Not provided"}\nEvidence: ${name}`;try{await navigator.clipboard.writeText(text);$("#shareResult").textContent="Report information copied. You can paste it into WhatsApp or another messaging app.";$("#shareResult").classList.add("show");showToast("Report information copied.","success")}catch(e){showToast("Unable to copy information.","error")}});
+
+/* =========================== TOAST ======================== */
+let toastTimer;function showToast(message,type="info"){clearTimeout(toastTimer);const t=$("#toast");t.textContent=message;t.className=`toast ${type} show`;toastTimer=setTimeout(()=>t.classList.remove("show"),3200)}
+
+/* ======================== INITIAL ========================== */
+updateStats();renderReports();renderDashboard();renderEvidence();renderHistory();renderNotifications();setConnection(false);
+
+</script>
+</body>
+</html>
